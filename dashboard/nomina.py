@@ -68,4 +68,66 @@ if uploaded_e_contabilidad and uploaded_e1_nomina and uploaded_e2_nomina:
 
             st.write("DataFrame agrupado por 'Empleado', 'Fecha', 'Codigo CCosto', incluyendo 'Nombre':")
             st.dataframe(df_agrupado)
-
+            
+        # Filtrar 'Movimientos Contables' para incluir solo 'XOC66' en 'Documento'
+        df_contabilidad_filtrado = df_contabilidad[df_contabilidad['Documento'] == 'XOC66']
+    
+        # Convertir las columnas necesarias a numéricas para evitar problemas
+        df_contabilidad_filtrado['Valor Debito'] = pd.to_numeric(df_contabilidad_filtrado['Valor Debito'], errors='coerce').fillna(0)
+        df_contabilidad_filtrado['Valor Credito'] = pd.to_numeric(df_contabilidad_filtrado['Valor Credito'], errors='coerce').fillna(0)
+    
+        # Calcular la diferencia entre 'Valor Débito' y 'Valor Crédito'
+        df_contabilidad_filtrado['Diferencia Valor'] = df_contabilidad_filtrado['Valor Debito'] - df_contabilidad_filtrado['Valor Credito']
+    
+        # Cruce entre 'df_agrupado' y 'df_contabilidad_filtrado' por 'Nit/Empleado' y 'Fecha'
+        df_cruzado = df_agrupado.merge(
+            df_contabilidad_filtrado[['Nit', 'Fecha', 'Diferencia Valor']],
+            left_on=['Empleado', 'Fecha'],
+            right_on=['Nit', 'Fecha'],
+            how='left'
+        )
+    
+        
+    # Cruce entre 'df_agrupado' y 'df_contabilidad_filtrado' por 'Nit/Empleado' y 'Fecha'
+    df_cruzado = df_agrupado.merge(
+        df_contabilidad_filtrado[['Nit', 'Fecha', 'Diferencia Valor', 'Documento']],
+        left_on=['Empleado', 'Fecha'],
+        right_on=['Nit', 'Fecha'],
+        how='outer',
+        indicator=True  # Agregar columna para identificar cruces
+    )
+    
+    # Identificar los registros que cruzaron correctamente
+    df_cruzado['Cruza'] = (
+        (df_cruzado['_merge'] == 'both') &
+        (df_cruzado['Salario'] == df_cruzado['Diferencia Valor'])
+    )
+    
+    # DataFrames de registros cruzados
+    df_acumulado_cruzados = df_cruzado[(df_cruzado['_merge'] == 'both') & df_cruzado['Cruza']]
+    df_contabilidad_cruzados = df_contabilidad_filtrado[
+        df_contabilidad_filtrado['Nit'].isin(df_acumulado_cruzados['Empleado']) &
+        df_contabilidad_filtrado['Fecha'].isin(df_acumulado_cruzados['Fecha'])
+    ]
+    
+    # DataFrames de registros no cruzados
+    df_acumulado_no_cruzados = df_cruzado[df_cruzado['_merge'] == 'left_only']
+    df_contabilidad_no_cruzados = df_cruzado[df_cruzado['_merge'] == 'right_only']
+    
+    # Mostrar resultados
+    st.subheader("Registros que cruzaron en el DataFrame acumulado")
+    st.write(f"Total: {len(df_acumulado_cruzados)}")
+    st.dataframe(df_acumulado_cruzados)
+    
+    st.subheader("Registros que cruzaron en el archivo de contabilidad")
+    st.write(f"Total: {len(df_contabilidad_cruzados)}")
+    st.dataframe(df_contabilidad_cruzados)
+    
+    st.subheader("Registros que no cruzaron en el DataFrame acumulado")
+    st.write(f"Total: {len(df_acumulado_no_cruzados)}")
+    st.dataframe(df_acumulado_no_cruzados)
+    
+    st.subheader("Registros que no cruzaron en el archivo de contabilidad")
+    st.write(f"Total: {len(df_contabilidad_no_cruzados)}")
+    st.dataframe(df_contabilidad_no_cruzados)
+    
