@@ -7,10 +7,12 @@ st.title("Gestión de Nómina y Contabilidad")
 # Subtítulo
 st.subheader("Carga de Archivos y Cruce de Datos")
 
+
 # Cargar los archivos
-uploaded_e_contabilidad = st.file_uploader("Sube el archivo Movimientos Contables.xlsx", type=["xlsx"])
-uploaded_e1_nomina = st.file_uploader("Sube el archivo Movimientos Nomina.xlsx", type=["xlsx"])
-uploaded_e2_nomina = st.file_uploader("Sube el archivo Matricial Nomina.xlsx", type=["xlsx"])
+uploaded_e_contabilidad = st.file_uploader("Sube el archivo Movimientos Contables", type=["xls", "xlsx"])
+uploaded_e1_nomina = st.file_uploader("Sube el archivo Movimientos Nomina", type=["xls", "xlsx"])
+uploaded_e2_nomina = st.file_uploader("Sube el archivo Matricial Nomina", type=["xls", "xlsx"])
+
 
 if uploaded_e_contabilidad and uploaded_e1_nomina and uploaded_e2_nomina:
     # Leer los archivos
